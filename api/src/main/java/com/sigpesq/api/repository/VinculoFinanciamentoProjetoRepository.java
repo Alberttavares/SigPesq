@@ -19,18 +19,23 @@ public class VinculoFinanciamentoProjetoRepository {
 
     private final RowMapper<VinculoFinanciamentoProjeto> rowMapper = (rs, rowNum) -> {
         VinculoFinanciamentoProjeto v = new VinculoFinanciamentoProjeto();
+        v.setIdVinculoFinanciamento(rs.getInt("id_vinculo_financiamento"));
         v.setIdFinanciamento(rs.getInt("id_financiamento"));
         v.setAgenciaFinanciadora(rs.getString("agencia_financiadora"));
         v.setTipoFomento(rs.getString("tipo_fomento"));
         v.setCodigoProjeto(rs.getString("codigo_projeto"));
         v.setTituloProjeto(rs.getString("titulo_projeto"));
-        v.setValorAlocado(rs.getBigDecimal("valor_alocado"));
+        v.setTipoApoio(rs.getString("tipo_apoio"));
+        v.setValorApoio(rs.getBigDecimal("valor_apoio"));
         return v;
     };
 
-    private void validarSaldoDisponivel(int idFinanciamento, String codigoProjetoIgnorar, BigDecimal novoValor) {
-        if (novoValor == null || novoValor.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("O valor alocado deve ser maior que zero.");
+    private void validarSaldoDisponivel(int idFinanciamento, Integer idVinculoIgnorar, BigDecimal novoValor) {
+        if (novoValor == null) {
+            return; // Coluna valor_apoio aceita NULL no banco
+        }
+        if (novoValor.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("O valor de apoio deve ser maior que zero.");
         }
 
         List<BigDecimal> totais = jdbc.query(
@@ -45,24 +50,24 @@ public class VinculoFinanciamentoProjetoRepository {
 
         BigDecimal valorTotal = totais.get(0);
         BigDecimal jaAlocado = jdbc.queryForObject(
-                "SELECT COALESCE(SUM(valor_alocado), 0) FROM vinculo_financiamento_projeto " +
-                "WHERE id_financiamento = ? AND codigo_projeto <> ?",
+                "SELECT COALESCE(SUM(valor_apoio), 0) FROM vinculo_financiamento_projeto " +
+                "WHERE id_financiamento = ? AND id_vinculo_financiamento <> ?",
                 BigDecimal.class,
                 idFinanciamento,
-                codigoProjetoIgnorar != null ? codigoProjetoIgnorar : ""
+                idVinculoIgnorar != null ? idVinculoIgnorar : -1
         );
 
         if (jaAlocado.add(novoValor).compareTo(valorTotal) > 0) {
-            throw new IllegalArgumentException("O valor alocado excede o saldo disponível do financiamento (Total: R$ " + valorTotal + ").");
+            throw new IllegalArgumentException("O valor de apoio excede o saldo disponível do financiamento (Total: R$ " + valorTotal + ").");
         }
     }
 
     public void salvar(VinculoFinanciamentoProjeto v) {
-        validarSaldoDisponivel(v.getIdFinanciamento(), null, v.getValorAlocado());
+        validarSaldoDisponivel(v.getIdFinanciamento(), null, v.getValorApoio());
 
-        String sql = "INSERT INTO vinculo_financiamento_projeto (id_financiamento, codigo_projeto, valor_alocado) " +
-                     "VALUES (?, ?, ?)";
-        jdbc.update(sql, v.getIdFinanciamento(), v.getCodigoProjeto(), v.getValorAlocado());
+        String sql = "INSERT INTO vinculo_financiamento_projeto (id_financiamento, codigo_projeto, tipo_apoio, valor_apoio) " +
+                     "VALUES (?, ?, ?, ?)";
+        jdbc.update(sql, v.getIdFinanciamento(), v.getCodigoProjeto(), v.getTipoApoio(), v.getValorApoio());
     }
 
     public List<VinculoFinanciamentoProjeto> listarTodos() {
@@ -70,7 +75,7 @@ public class VinculoFinanciamentoProjetoRepository {
                      "FROM vinculo_financiamento_projeto v " +
                      "INNER JOIN financiamento f ON v.id_financiamento = f.id_financiamento " +
                      "INNER JOIN projeto p ON v.codigo_projeto = p.codigo " +
-                     "ORDER BY v.id_financiamento DESC";
+                     "ORDER BY v.id_vinculo_financiamento DESC";
         return jdbc.query(sql, rowMapper);
     }
 
@@ -79,20 +84,30 @@ public class VinculoFinanciamentoProjetoRepository {
                      "FROM vinculo_financiamento_projeto v " +
                      "INNER JOIN financiamento f ON v.id_financiamento = f.id_financiamento " +
                      "INNER JOIN projeto p ON v.codigo_projeto = p.codigo " +
-                     "WHERE v.codigo_projeto = ?";
+                     "WHERE v.codigo_projeto = ? " +
+                     "ORDER BY v.id_vinculo_financiamento DESC";
         return jdbc.query(sql, rowMapper, codigoProjeto);
     }
 
-    public int atualizar(int idFinanciamento, String codigoProjeto, VinculoFinanciamentoProjeto v) {
-        validarSaldoDisponivel(idFinanciamento, codigoProjeto, v.getValorAlocado());
+    public int atualizar(int idVinculo, VinculoFinanciamentoProjeto v) {
+        List<Integer> idsFinanciamento = jdbc.query(
+                "SELECT id_financiamento FROM vinculo_financiamento_projeto WHERE id_vinculo_financiamento = ?",
+                (rs, rowNum) -> rs.getInt("id_financiamento"),
+                idVinculo
+        );
+        if (idsFinanciamento.isEmpty()) {
+            return 0;
+        }
 
-        String sql = "UPDATE vinculo_financiamento_projeto SET valor_alocado = ? " +
-                     "WHERE id_financiamento = ? AND codigo_projeto = ?";
-        return jdbc.update(sql, v.getValorAlocado(), idFinanciamento, codigoProjeto);
+        validarSaldoDisponivel(idsFinanciamento.get(0), idVinculo, v.getValorApoio());
+
+        String sql = "UPDATE vinculo_financiamento_projeto SET tipo_apoio = ?, valor_apoio = ? " +
+                     "WHERE id_vinculo_financiamento = ?";
+        return jdbc.update(sql, v.getTipoApoio(), v.getValorApoio(), idVinculo);
     }
 
-    public int deletar(int idFinanciamento, String codigoProjeto) {
-        String sql = "DELETE FROM vinculo_financiamento_projeto WHERE id_financiamento = ? AND codigo_projeto = ?";
-        return jdbc.update(sql, idFinanciamento, codigoProjeto);
+    public int deletar(int idVinculo) {
+        String sql = "DELETE FROM vinculo_financiamento_projeto WHERE id_vinculo_financiamento = ?";
+        return jdbc.update(sql, idVinculo);
     }
 }

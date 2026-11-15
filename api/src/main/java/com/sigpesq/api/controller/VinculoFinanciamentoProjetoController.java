@@ -1,23 +1,13 @@
 package com.sigpesq.api.controller;
 
-import java.util.List;
-
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.sigpesq.api.model.VinculoFinanciamentoProjeto;
 import com.sigpesq.api.repository.VinculoFinanciamentoProjetoRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/vinculos-financiamento")
@@ -25,6 +15,7 @@ import com.sigpesq.api.repository.VinculoFinanciamentoProjetoRepository;
 public class VinculoFinanciamentoProjetoController {
 
     private final VinculoFinanciamentoProjetoRepository repository;
+    private static final List<String> TIPOS_APOIO_VALIDOS = List.of("Total", "Parcial");
 
     public VinculoFinanciamentoProjetoController(VinculoFinanciamentoProjetoRepository repository) {
         this.repository = repository;
@@ -42,40 +33,48 @@ public class VinculoFinanciamentoProjetoController {
 
     @PostMapping
     public ResponseEntity<?> criar(@RequestBody VinculoFinanciamentoProjeto vinculo) {
+        if (vinculo.getTipoApoio() == null || !TIPOS_APOIO_VALIDOS.contains(vinculo.getTipoApoio())) {
+            return ResponseEntity.badRequest()
+                    .body("Tipo de apoio inválido. Valores permitidos: 'Total' ou 'Parcial'.");
+        }
+
         try {
             repository.salvar(vinculo);
             return ResponseEntity.status(HttpStatus.CREATED).body("Financiamento vinculado ao projeto com sucesso.");
-        } catch (DuplicateKeyException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Erro: Este financiamento já está vinculado a este projeto.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest().body("Erro: Financiamento ou projeto não encontrado.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao vincular financiamento: " + e.getMessage());
         }
     }
 
-    @PutMapping("/{idFinanciamento}/{codigoProjeto}")
+    @PutMapping("/{idVinculo}")
     public ResponseEntity<?> atualizar(
-            @PathVariable int idFinanciamento,
-            @PathVariable String codigoProjeto,
+            @PathVariable int idVinculo,
             @RequestBody VinculoFinanciamentoProjeto vinculo) {
+        if (vinculo.getTipoApoio() == null || !TIPOS_APOIO_VALIDOS.contains(vinculo.getTipoApoio())) {
+            return ResponseEntity.badRequest()
+                    .body("Tipo de apoio inválido. Valores permitidos: 'Total' ou 'Parcial'.");
+        }
+
         try {
-            int linhasAfetadas = repository.atualizar(idFinanciamento, codigoProjeto, vinculo);
+            int linhasAfetadas = repository.atualizar(idVinculo, vinculo);
             if (linhasAfetadas == 0) {
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.ok("Valor alocado atualizado com sucesso.");
+            return ResponseEntity.ok("Vínculo de financiamento atualizado com sucesso.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao atualizar vínculo: " + e.getMessage());
         }
     }
 
-    @DeleteMapping("/{idFinanciamento}/{codigoProjeto}")
-    public ResponseEntity<?> deletar(
-            @PathVariable int idFinanciamento,
-            @PathVariable String codigoProjeto) {
-        int linhasAfetadas = repository.deletar(idFinanciamento, codigoProjeto);
+    @DeleteMapping("/{idVinculo}")
+    public ResponseEntity<?> deletar(@PathVariable int idVinculo) {
+        int linhasAfetadas = repository.deletar(idVinculo);
         if (linhasAfetadas == 0) {
             return ResponseEntity.notFound().build();
         }

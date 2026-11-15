@@ -3,12 +3,17 @@ package com.sigpesq.api.model;
 import java.math.BigDecimal;
 
 public class VinculoFinanciamentoProjeto {
+    private Integer idVinculoFinanciamento;
     private Integer idFinanciamento;
     private String agenciaFinanciadora; // Preenchido via JOIN
     private String tipoFomento;         // Preenchido via JOIN
     private String codigoProjeto;
     private String tituloProjeto;       // Preenchido via JOIN
-    private BigDecimal valorAlocado;
+    private String tipoApoio;           // "Total" ou "Parcial"
+    private BigDecimal valorApoio;
+
+    public Integer getIdVinculoFinanciamento() { return idVinculoFinanciamento; }
+    public void setIdVinculoFinanciamento(Integer idVinculoFinanciamento) { this.idVinculoFinanciamento = idVinculoFinanciamento; }
 
     public Integer getIdFinanciamento() { return idFinanciamento; }
     public void setIdFinanciamento(Integer idFinanciamento) { this.idFinanciamento = idFinanciamento; }
@@ -25,6 +30,9 @@ public class VinculoFinanciamentoProjeto {
     public String getTituloProjeto() { return tituloProjeto; }
     public void setTituloProjeto(String tituloProjeto) { this.tituloProjeto = tituloProjeto; }
 
-    public BigDecimal getValorAlocado() { return valorAlocado; }
-    public void setValorAlocado(BigDecimal valorAlocado) { this.valorAlocado = valorAlocado; }
+    public String getTipoApoio() { return tipoApoio; }
+    public void setTipoApoio(String tipoApoio) { this.tipoApoio = tipoApoio; }
+
+    public BigDecimal getValorApoio() { return valorApoio; }
+    public void setValorApoio(BigDecimal valorApoio) { this.valorApoio = valorApoio; }
 }

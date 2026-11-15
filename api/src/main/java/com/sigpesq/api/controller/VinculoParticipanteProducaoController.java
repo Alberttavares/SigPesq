@@ -1,0 +1,92 @@
+package com.sigpesq.api.controller;
+
+import com.sigpesq.api.model.VinculoParticipanteProducao;
+import com.sigpesq.api.repository.VinculoParticipanteProducaoRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/vinculos-producao")
+@CrossOrigin(origins = "http://localhost:3000")
+public class VinculoParticipanteProducaoController {
+
+    private final VinculoParticipanteProducaoRepository repository;
+
+    public VinculoParticipanteProducaoController(VinculoParticipanteProducaoRepository repository) {
+        this.repository = repository;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<VinculoParticipanteProducao>> listar() {
+        return ResponseEntity.ok(repository.listarTodos());
+    }
+
+    @GetMapping("/producao/{idProducao}")
+    public ResponseEntity<List<VinculoParticipanteProducao>> listarPorProducao(@PathVariable int idProducao) {
+        return ResponseEntity.ok(repository.buscarPorProducao(idProducao));
+    }
+
+    @GetMapping("/participante/{cpfParticipante}")
+    public ResponseEntity<List<VinculoParticipanteProducao>> listarPorParticipante(@PathVariable String cpfParticipante) {
+        return ResponseEntity.ok(repository.buscarPorParticipante(cpfParticipante));
+    }
+
+    @PostMapping
+    public ResponseEntity<?> criar(@RequestBody VinculoParticipanteProducao vinculo) {
+        if (vinculo.getTipoParticipacao() == null || vinculo.getTipoParticipacao().isBlank()) {
+            return ResponseEntity.badRequest().body("O campo 'tipoParticipacao' é obrigatório.");
+        }
+        if (vinculo.getDataInicio() != null && vinculo.getDataTermino() != null
+                && vinculo.getDataTermino().isBefore(vinculo.getDataInicio())) {
+            return ResponseEntity.badRequest().body("A data de término não pode ser anterior à data de início.");
+        }
+
+        try {
+            repository.salvar(vinculo);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Autor vinculado à produção científica com sucesso.");
+        } catch (DuplicateKeyException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Erro: Este participante já está cadastrado como autor desta produção.");
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest().body("Erro: Participante ou produção científica não encontrado.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao vincular autor: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{cpfParticipante}/{idProducao}")
+    public ResponseEntity<?> atualizar(
+            @PathVariable String cpfParticipante,
+            @PathVariable int idProducao,
+            @RequestBody VinculoParticipanteProducao vinculo) {
+        if (vinculo.getTipoParticipacao() == null || vinculo.getTipoParticipacao().isBlank()) {
+            return ResponseEntity.badRequest().body("O campo 'tipoParticipacao' é obrigatório.");
+        }
+
+        try {
+            int linhasAfetadas = repository.atualizar(cpfParticipante, idProducao, vinculo);
+            if (linhasAfetadas == 0) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok("Vínculo de autoria atualizado com sucesso.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao atualizar vínculo: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{cpfParticipante}/{idProducao}")
+    public ResponseEntity<?> deletar(
+            @PathVariable String cpfParticipante,
+            @PathVariable int idProducao) {
+        int linhasAfetadas = repository.deletar(cpfParticipante, idProducao);
+        if (linhasAfetadas == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+}
