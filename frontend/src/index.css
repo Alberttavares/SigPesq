@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Estilos base do SigPesq. A interface é estilizada com classes Tailwind em App.tsx. */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
