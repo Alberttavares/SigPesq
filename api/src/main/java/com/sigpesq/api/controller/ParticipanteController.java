@@ -1,7 +1,11 @@
 package com.sigpesq.api.controller;
 
+import com.sigpesq.api.dto.ParticipanteRequest;
 import com.sigpesq.api.model.Participante;
 import com.sigpesq.api.repository.ParticipanteRepository;
+
+import jakarta.validation.Valid;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,15 +39,9 @@ public class ParticipanteController {
     }
 
     @PostMapping
-    public ResponseEntity<?> criar(@RequestBody Participante participante) {
-        List<String> tiposValidos = List.of("Docente", "Discente", "Técnico");
-        if (participante.getTipo() == null || !tiposValidos.contains(participante.getTipo())) {
-            return ResponseEntity.badRequest()
-                    .body("Tipo inválido. Os valores permitidos são: Docente, Discente ou Técnico.");
-        }
-
+    public ResponseEntity<?> criar(@Valid @RequestBody ParticipanteRequest request) {
         try {
-            repository.salvar(participante);
+            repository.salvar(request.toModel());
             return ResponseEntity.status(HttpStatus.CREATED).body("Participante cadastrado com sucesso.");
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -54,9 +52,9 @@ public class ParticipanteController {
     }
 
     @PutMapping("/{cpf}")
-    public ResponseEntity<?> atualizar(@PathVariable String cpf, @RequestBody Participante participante) {
+    public ResponseEntity<?> atualizar(@PathVariable String cpf, @Valid @RequestBody ParticipanteRequest request) {
         try {
-            int linhasAfetadas = repository.atualizar(cpf, participante);
+            int linhasAfetadas = repository.atualizar(cpf, request.toModel());
             if (linhasAfetadas == 0) {
                 return ResponseEntity.notFound().build();
             }

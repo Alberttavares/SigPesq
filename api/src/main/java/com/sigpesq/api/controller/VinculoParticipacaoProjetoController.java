@@ -2,6 +2,8 @@ package com.sigpesq.api.controller;
 
 import com.sigpesq.api.model.VinculoParticipacaoProjeto;
 import com.sigpesq.api.repository.VinculoParticipacaoProjetoRepository;
+import com.sigpesq.api.dto.VinculoParticipacaoProjetoRequest;
+import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -32,9 +34,9 @@ public class VinculoParticipacaoProjetoController {
     }
 
     @PostMapping
-    public ResponseEntity<?> criar(@RequestBody VinculoParticipacaoProjeto vinculo) {
+    public ResponseEntity<?> criar(@Valid @RequestBody VinculoParticipacaoProjetoRequest request) {
         try {
-            repository.salvar(vinculo);
+            repository.salvar(request.toModel());
             return ResponseEntity.status(HttpStatus.CREATED).body("Vínculo de participação cadastrado com sucesso.");
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -47,13 +49,14 @@ public class VinculoParticipacaoProjetoController {
         }
     }
 
-    @PutMapping("/{codigoProjeto}/{cpfParticipante}")
+   @PutMapping("/{codigoProjeto}/{cpfParticipante}")
     public ResponseEntity<?> atualizar(
             @PathVariable String codigoProjeto,
             @PathVariable String cpfParticipante,
-            @RequestBody VinculoParticipacaoProjeto vinculo) {
+            @Valid @RequestBody VinculoParticipacaoProjetoRequest request) {
         try {
-            int linhasAfetadas = repository.atualizar(codigoProjeto, cpfParticipante, vinculo);
+            String cpfLimpo = cpfParticipante.replaceAll("\\D", "");
+            int linhasAfetadas = repository.atualizar(codigoProjeto.trim().toUpperCase(), cpfLimpo, request.toModel());
             if (linhasAfetadas == 0) {
                 return ResponseEntity.notFound().build();
             }

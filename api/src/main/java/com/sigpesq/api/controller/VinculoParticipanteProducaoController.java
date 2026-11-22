@@ -2,6 +2,8 @@ package com.sigpesq.api.controller;
 
 import com.sigpesq.api.model.VinculoParticipanteProducao;
 import com.sigpesq.api.repository.VinculoParticipanteProducaoRepository;
+import com.sigpesq.api.dto.VinculoParticipanteProducaoRequest;
+import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -36,18 +38,10 @@ public class VinculoParticipanteProducaoController {
         return ResponseEntity.ok(repository.buscarPorParticipante(cpfParticipante));
     }
 
-    @PostMapping
-    public ResponseEntity<?> criar(@RequestBody VinculoParticipanteProducao vinculo) {
-        if (vinculo.getTipoParticipacao() == null || vinculo.getTipoParticipacao().isBlank()) {
-            return ResponseEntity.badRequest().body("O campo 'tipoParticipacao' é obrigatório.");
-        }
-        if (vinculo.getDataInicio() != null && vinculo.getDataTermino() != null
-                && vinculo.getDataTermino().isBefore(vinculo.getDataInicio())) {
-            return ResponseEntity.badRequest().body("A data de término não pode ser anterior à data de início.");
-        }
-
+@PostMapping
+    public ResponseEntity<?> criar(@Valid @RequestBody VinculoParticipanteProducaoRequest request) {
         try {
-            repository.salvar(vinculo);
+            repository.salvar(request.toModel());
             return ResponseEntity.status(HttpStatus.CREATED).body("Autor vinculado à produção científica com sucesso.");
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -63,13 +57,10 @@ public class VinculoParticipanteProducaoController {
     public ResponseEntity<?> atualizar(
             @PathVariable String cpfParticipante,
             @PathVariable int idProducao,
-            @RequestBody VinculoParticipanteProducao vinculo) {
-        if (vinculo.getTipoParticipacao() == null || vinculo.getTipoParticipacao().isBlank()) {
-            return ResponseEntity.badRequest().body("O campo 'tipoParticipacao' é obrigatório.");
-        }
-
+            @Valid @RequestBody VinculoParticipanteProducaoRequest request) {
         try {
-            int linhasAfetadas = repository.atualizar(cpfParticipante, idProducao, vinculo);
+            String cpfLimpo = cpfParticipante.replaceAll("\\D", "");
+            int linhasAfetadas = repository.atualizar(cpfLimpo, idProducao, request.toModel());
             if (linhasAfetadas == 0) {
                 return ResponseEntity.notFound().build();
             }

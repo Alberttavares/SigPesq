@@ -1,7 +1,11 @@
 package com.sigpesq.api.controller;
 
+import com.sigpesq.api.dto.VinculoFinanciamentoProjetoRequest;
 import com.sigpesq.api.model.VinculoFinanciamentoProjeto;
 import com.sigpesq.api.repository.VinculoFinanciamentoProjetoRepository;
+
+import jakarta.validation.Valid;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,15 +35,10 @@ public class VinculoFinanciamentoProjetoController {
         return ResponseEntity.ok(repository.buscarPorProjeto(codigoProjeto));
     }
 
-    @PostMapping
-    public ResponseEntity<?> criar(@RequestBody VinculoFinanciamentoProjeto vinculo) {
-        if (vinculo.getTipoApoio() == null || !TIPOS_APOIO_VALIDOS.contains(vinculo.getTipoApoio())) {
-            return ResponseEntity.badRequest()
-                    .body("Tipo de apoio inválido. Valores permitidos: 'Total' ou 'Parcial'.");
-        }
-
+   @PostMapping
+    public ResponseEntity<?> criar(@Valid @RequestBody VinculoFinanciamentoProjetoRequest request) {
         try {
-            repository.salvar(vinculo);
+            repository.salvar(request.toModel());
             return ResponseEntity.status(HttpStatus.CREATED).body("Financiamento vinculado ao projeto com sucesso.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -53,14 +52,9 @@ public class VinculoFinanciamentoProjetoController {
     @PutMapping("/{idVinculo}")
     public ResponseEntity<?> atualizar(
             @PathVariable int idVinculo,
-            @RequestBody VinculoFinanciamentoProjeto vinculo) {
-        if (vinculo.getTipoApoio() == null || !TIPOS_APOIO_VALIDOS.contains(vinculo.getTipoApoio())) {
-            return ResponseEntity.badRequest()
-                    .body("Tipo de apoio inválido. Valores permitidos: 'Total' ou 'Parcial'.");
-        }
-
+            @Valid @RequestBody VinculoFinanciamentoProjetoRequest request) {
         try {
-            int linhasAfetadas = repository.atualizar(idVinculo, vinculo);
+            int linhasAfetadas = repository.atualizar(idVinculo, request.toModel());
             if (linhasAfetadas == 0) {
                 return ResponseEntity.notFound().build();
             }
@@ -71,7 +65,7 @@ public class VinculoFinanciamentoProjetoController {
             return ResponseEntity.badRequest().body("Erro ao atualizar vínculo: " + e.getMessage());
         }
     }
-
+    
     @DeleteMapping("/{idVinculo}")
     public ResponseEntity<?> deletar(@PathVariable int idVinculo) {
         int linhasAfetadas = repository.deletar(idVinculo);

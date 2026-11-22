@@ -1,7 +1,11 @@
 package com.sigpesq.api.controller;
 
+import com.sigpesq.api.dto.ProducaoCientificaRequest;
 import com.sigpesq.api.model.ProducaoCientifica;
 import com.sigpesq.api.repository.ProducaoCientificaRepository;
+
+import jakarta.validation.Valid;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,9 +44,9 @@ public class ProducaoCientificaController {
     }
 
     @PostMapping
-    public ResponseEntity<?> criar(@RequestBody ProducaoCientifica producao) {
+    public ResponseEntity<?> criar( @Valid @RequestBody ProducaoCientificaRequest request) {
         try {
-            repository.salvar(producao);
+            repository.salvar(request.toModel());
             return ResponseEntity.status(HttpStatus.CREATED).body("Produção científica cadastrada com sucesso.");
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest()
@@ -53,9 +57,9 @@ public class ProducaoCientificaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizar(@PathVariable int id, @RequestBody ProducaoCientifica producao) {
+    public ResponseEntity<?> atualizar(@PathVariable int id,  @Valid @RequestBody ProducaoCientificaRequest request) {
         try {
-            int linhasAfetadas = repository.atualizar(id, producao);
+            int linhasAfetadas = repository.atualizar(id, request.toModel());
             if (linhasAfetadas == 0) {
                 return ResponseEntity.notFound().build();
             }
