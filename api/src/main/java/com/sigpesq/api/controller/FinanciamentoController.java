@@ -1,7 +1,9 @@
 package com.sigpesq.api.controller;
 
-import java.math.BigDecimal;
+import com.sigpesq.api.dto.FinanciamentoRequest;
+
 import java.util.List;
+ 
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sigpesq.api.model.Financiamento;
 import com.sigpesq.api.repository.FinanciamentoRepository;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/financiamentos")
@@ -45,17 +49,9 @@ public class FinanciamentoController {
     }
 
     @PostMapping
-    public ResponseEntity<?> criar(@RequestBody Financiamento financiamento) {
-        if (financiamento.getValorTotal() == null || financiamento.getValorTotal().compareTo(BigDecimal.ZERO) <= 0) {
-            return ResponseEntity.badRequest().body("O valor total do financiamento deve ser maior que zero.");
-        }
-        if (financiamento.getDataInicioVigencia() != null && financiamento.getDataFimVigencia() != null
-                && financiamento.getDataFimVigencia().isBefore(financiamento.getDataInicioVigencia())) {
-            return ResponseEntity.badRequest().body("A data final de vigência não pode ser anterior à data inicial.");
-        }
-
+    public ResponseEntity<?> criar(@Valid @RequestBody FinanciamentoRequest request) {
         try {
-            repository.salvar(financiamento);
+            repository.salvar(request.toModel());
             return ResponseEntity.status(HttpStatus.CREATED).body("Financiamento cadastrado com sucesso.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao cadastrar financiamento: " + e.getMessage());
@@ -63,18 +59,17 @@ public class FinanciamentoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizar(@PathVariable int id, @RequestBody Financiamento financiamento) {
-        if (financiamento.getValorTotal() == null || financiamento.getValorTotal().compareTo(BigDecimal.ZERO) <= 0) {
-            return ResponseEntity.badRequest().body("O valor total do financiamento deve ser maior que zero.");
+    public ResponseEntity<?> atualizar(@PathVariable int id, @Valid @RequestBody FinanciamentoRequest request) {
+        try {
+            int linhasAfetadas = repository.atualizar(id, request.toModel());
+            if (linhasAfetadas == 0) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok("Financiamento atualizado com sucesso.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao atualizar financiamento: " + e.getMessage());
         }
-
-        int linhasAfetadas = repository.atualizar(id, financiamento);
-        if (linhasAfetadas == 0) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok("Financiamento atualizado com sucesso.");
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletar(@PathVariable int id) {
         try {

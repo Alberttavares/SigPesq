@@ -1,7 +1,11 @@
 package com.sigpesq.api.controller;
 
+import com.sigpesq.api.dto.ProjetoRequest;
 import com.sigpesq.api.model.Projeto;
 import com.sigpesq.api.repository.ProjetoRepository;
+
+import jakarta.validation.Valid;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -42,14 +46,9 @@ public class ProjetoController {
     }
 
     @PostMapping
-    public ResponseEntity<?> criar(@RequestBody Projeto projeto) {
-        if (projeto.getSituacao() == null || !SITUACOES_VALIDAS.contains(projeto.getSituacao())) {
-            return ResponseEntity.badRequest()
-                    .body("Situação inválida. Valores permitidos: 'Em andamento', 'Concluido' ou 'Cancelado'.");
-        }
-
+    public ResponseEntity<?> criar(@Valid @RequestBody ProjetoRequest request) {
         try {
-            repository.salvar(projeto);
+            repository.salvar(request.toModel());
             return ResponseEntity.status(HttpStatus.CREATED).body("Projeto cadastrado com sucesso.");
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -62,14 +61,9 @@ public class ProjetoController {
     }
 
     @PutMapping("/{codigo}")
-    public ResponseEntity<?> atualizar(@PathVariable String codigo, @RequestBody Projeto projeto) {
-        if (projeto.getSituacao() == null || !SITUACOES_VALIDAS.contains(projeto.getSituacao())) {
-            return ResponseEntity.badRequest()
-                    .body("Situação inválida. Valores permitidos: 'Em andamento', 'Concluido' ou 'Cancelado'.");
-        }
-
+    public ResponseEntity<?> atualizar(@PathVariable String codigo, @Valid @RequestBody ProjetoRequest request) {
         try {
-            int linhasAfetadas = repository.atualizar(codigo, projeto);
+            int linhasAfetadas = repository.atualizar(codigo, request.toModel());
             if (linhasAfetadas == 0) {
                 return ResponseEntity.notFound().build();
             }
