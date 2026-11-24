@@ -5,6 +5,7 @@ import com.sigpesq.api.repository.*;
 import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -41,8 +42,14 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+
+
+        Boolean bancoVazio = participanteRepo.listarTodos().isEmpty();
+
+            AdministradorSeeder();
+
         // 1. Trava de idempotência: evita duplicar registros ao reiniciar o servidor
-        if (!participanteRepo.listarTodos().isEmpty()) {
+        if (!bancoVazio) {
             System.out.println("[Seeder] Banco já possui dados. Seeding ignorado.");
             return;
         }
@@ -76,6 +83,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             p.setNome(nome);
             p.setEmailInstitucional(email.toLowerCase());
             p.setTipo(tipos[i]);
+            p.setSenha("senha123"); 
 
             participanteRepo.salvar(p);
             todosParticipantes.add(p);
@@ -223,7 +231,31 @@ public class DatabaseSeeder implements CommandLineRunner {
                 }
             }
         }
-
         System.out.println("[Seeder] Base populada com sucesso!");
+     
+        
+    }
+    
+    private void AdministradorSeeder() {
+        Participante existente = participanteRepo.buscarPorCpf("00000000000");
+
+        Participante admin = new Participante();
+        admin.setCpf("00000000000");
+        admin.setNome("Administrador SIGPESQ");
+        admin.setEmailInstitucional("admin@ufes.br");
+        admin.setTipo("Administrador");
+        admin.setSenha("adminadmin");
+
+        try {
+            if (existente == null) {
+                participanteRepo.salvar(admin);
+                System.out.println("[Seeder] Administrador padrão criado: admin@ufes.br");
+            } else if (!"Administrador".equals(existente.getTipo())) {
+                participanteRepo.atualizar("00000000000", admin);
+                System.out.println("[Seeder] Participante 00000000000 promovido a Administrador.");
+            }
+        } catch (DuplicateKeyException e) {
+            System.out.println("[Seeder] Não foi possível criar o admin padrão: e-mail admin@ufes.br já está em uso por outro CPF.");
+        }
     }
 }

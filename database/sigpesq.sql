@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `participante` (
     `nome` VARCHAR(255) NOT NULL,
     `senha` VARCHAR(255) NOT NULL,
     `email_institucional` VARCHAR(255) NOT NULL,
-    `tipo` ENUM('Docente', 'Discente', 'Tecnico') NOT NULL,
+    `tipo` ENUM('Docente', 'Discente', 'Tecnico', 'Administrador') NOT NULL,
     PRIMARY KEY (`cpf`),
     CONSTRAINT `uq_participante_email` UNIQUE (`email_institucional`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

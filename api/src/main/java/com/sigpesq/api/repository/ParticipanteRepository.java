@@ -3,6 +3,7 @@ package com.sigpesq.api.repository;
 import com.sigpesq.api.model.Participante;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,12 +12,13 @@ import java.util.List;
 public class ParticipanteRepository {
 
     private final JdbcTemplate jdbc;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public ParticipanteRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    // Mapeia cada linha retornada do MySQL para o objeto Java
+    // Mapeia cada linha retornada do MySQL para o objeto Java (sem expor a senha)
     private final RowMapper<Participante> rowMapper = (rs, rowNum) -> {
         Participante p = new Participante();
         p.setCpf(rs.getString("cpf"));
@@ -26,10 +28,21 @@ public class ParticipanteRepository {
         return p;
     };
 
+    // Verifica se o participante é administrador
+    public boolean isAdministrador(String cpf) {
+        if (cpf == null || cpf.isBlank()) {
+            return false;
+        }
+        String sql = "SELECT COUNT(*) FROM participante WHERE cpf = ? AND tipo = 'Administrador'";
+        Integer total = jdbc.queryForObject(sql, Integer.class, cpf);
+        return total != null && total > 0;
+    }
+
     // CREATE
     public void salvar(Participante p) {
-        String sql = "INSERT INTO participante (cpf, nome, email_institucional, tipo) VALUES (?, ?, ?, ?)";
-        jdbc.update(sql, p.getCpf(), p.getNome(), p.getEmailInstitucional(), p.getTipo());
+        String sql = "INSERT INTO participante (cpf, nome, email_institucional, tipo, senha) VALUES (?, ?, ?, ?, ?)";
+        String senhaHash = passwordEncoder.encode(p.getSenha());
+        jdbc.update(sql, p.getCpf(), p.getNome(), p.getEmailInstitucional(), p.getTipo(), senhaHash);
     }
 
     // READ (Todos)
@@ -45,8 +58,14 @@ public class ParticipanteRepository {
         return lista.isEmpty() ? null : lista.get(0);
     }
 
-    // UPDATE
+    // UPDATE (atualiza a senha apenas se uma nova for enviada)
     public int atualizar(String cpf, Participante p) {
+        if (p.getSenha() != null && !p.getSenha().isBlank()) {
+            String sql = "UPDATE participante SET nome = ?, email_institucional = ?, tipo = ?, senha = ? WHERE cpf = ?";
+            String senhaHash = passwordEncoder.encode(p.getSenha());
+            return jdbc.update(sql, p.getNome(), p.getEmailInstitucional(), p.getTipo(), senhaHash, cpf);
+        }
+
         String sql = "UPDATE participante SET nome = ?, email_institucional = ?, tipo = ? WHERE cpf = ?";
         return jdbc.update(sql, p.getNome(), p.getEmailInstitucional(), p.getTipo(), cpf);
     }

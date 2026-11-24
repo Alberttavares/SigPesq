@@ -39,8 +39,27 @@ public class ParticipanteController {
         return ResponseEntity.ok(p);
     }
 
- @PostMapping
-    public ResponseEntity<?> criar(@Valid @RequestBody ParticipanteRequest request) {
+    private boolean podeDefinirAdministrador(String tipoDestino, String cpfSolicitante) {
+        if (!"Administrador".equals(tipoDestino)) {
+            return true;
+        }
+        if (cpfSolicitante == null || cpfSolicitante.isBlank()) {
+            return false;
+        }
+        String cpfLimpo = cpfSolicitante.replaceAll("\\D", "");
+        return repository.isAdministrador(cpfLimpo);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> criar(
+            @RequestHeader(value = "X-Solicitante-Cpf", required = false) String cpfSolicitante,
+            @Valid @RequestBody ParticipanteRequest request) {
+
+        if (!podeDefinirAdministrador(request.tipo(), cpfSolicitante)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Acesso negado: apenas administradores podem cadastrar outro administrador.");
+        }
+
         if (request.senha() == null) {
             return ResponseEntity.unprocessableEntity()
                     .body(Map.of("senha", "A senha é obrigatória."));
@@ -58,7 +77,16 @@ public class ParticipanteController {
     }
 
     @PutMapping("/{cpf}")
-    public ResponseEntity<?> atualizar(@PathVariable String cpf, @Valid @RequestBody ParticipanteRequest request) {
+    public ResponseEntity<?> atualizar(
+            @PathVariable String cpf,
+            @RequestHeader(value = "X-Solicitante-Cpf", required = false) String cpfSolicitante,
+            @Valid @RequestBody ParticipanteRequest request) {
+
+        if (!podeDefinirAdministrador(request.tipo(), cpfSolicitante)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Acesso negado: apenas administradores podem atribuir o perfil de administrador.");
+        }
+
         try {
             String cpfLimpo = cpf.replaceAll("\\D", "");
             int linhasAfetadas = repository.atualizar(cpfLimpo, request.toModel());
