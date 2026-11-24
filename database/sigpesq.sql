@@ -10,8 +10,9 @@ SET NAMES utf8mb4;
 CREATE TABLE IF NOT EXISTS `participante` (
     `cpf` CHAR(11) NOT NULL,
     `nome` VARCHAR(255) NOT NULL,
+    `senha` VARCHAR(255) NOT NULL,
     `email_institucional` VARCHAR(255) NOT NULL,
-    `tipo` ENUM('Docente', 'Discente', 'Técnico') NOT NULL,
+    `tipo` ENUM('Docente', 'Discente', 'Tecnico') NOT NULL,
     PRIMARY KEY (`cpf`),
     CONSTRAINT `uq_participante_email` UNIQUE (`email_institucional`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

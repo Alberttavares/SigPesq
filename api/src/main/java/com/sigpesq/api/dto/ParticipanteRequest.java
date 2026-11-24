@@ -1,7 +1,6 @@
 package com.sigpesq.api.dto;
 
 import com.sigpesq.api.model.Participante;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -23,9 +22,11 @@ public record ParticipanteRequest(
 
         @NotBlank(message = "O tipo de participante é obrigatório.")
         @Pattern(regexp = "Docente|Discente|Tecnico", message = "O tipo deve ser 'Docente', 'Discente' ou 'Tecnico'.")
-        String tipo
+        String tipo,
+
+        @Size(min = 6, max = 100, message = "A senha deve ter entre 6 e 100 caracteres.")
+        String senha
 ) {
-    // Altera e limpa os campos antes de validar
     public ParticipanteRequest {
         cpf = cpf != null ? cpf.replaceAll("\\D", "") : null;
         nome = nome != null ? nome.trim() : null;
@@ -33,6 +34,7 @@ public record ParticipanteRequest(
         if (tipo != null) {
             tipo = tipo.trim().equalsIgnoreCase("Técnico") ? "Tecnico" : tipo.trim();
         }
+        senha = (senha != null && senha.isBlank()) ? null : senha;
     }
 
     public Participante toModel() {
@@ -41,6 +43,7 @@ public record ParticipanteRequest(
         p.setNome(nome);
         p.setEmailInstitucional(emailInstitucional);
         p.setTipo(tipo);
+        p.setSenha(senha);
         return p;
     }
 }
