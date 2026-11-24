@@ -21,7 +21,7 @@ public record ParticipanteRequest(
         String emailInstitucional,
 
         @NotBlank(message = "O tipo de participante é obrigatório.")
-        @Pattern(regexp = "Docente|Discente|Tecnico", message = "O tipo deve ser 'Docente', 'Discente' ou 'Tecnico'.")
+        @Pattern(regexp = "Docente|Discente|Tecnico|Administrador", message = "O tipo deve ser 'Docente', 'Discente', 'Tecnico' ou 'Administrador'.")
         String tipo,
 
         @Size(min = 6, max = 100, message = "A senha deve ter entre 6 e 100 caracteres.")
