@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/participantes")
@@ -38,8 +39,13 @@ public class ParticipanteController {
         return ResponseEntity.ok(p);
     }
 
-    @PostMapping
+ @PostMapping
     public ResponseEntity<?> criar(@Valid @RequestBody ParticipanteRequest request) {
+        if (request.senha() == null) {
+            return ResponseEntity.unprocessableEntity()
+                    .body(Map.of("senha", "A senha é obrigatória."));
+        }
+
         try {
             repository.salvar(request.toModel());
             return ResponseEntity.status(HttpStatus.CREATED).body("Participante cadastrado com sucesso.");
@@ -54,17 +60,19 @@ public class ParticipanteController {
     @PutMapping("/{cpf}")
     public ResponseEntity<?> atualizar(@PathVariable String cpf, @Valid @RequestBody ParticipanteRequest request) {
         try {
-            int linhasAfetadas = repository.atualizar(cpf, request.toModel());
+            String cpfLimpo = cpf.replaceAll("\\D", "");
+            int linhasAfetadas = repository.atualizar(cpfLimpo, request.toModel());
             if (linhasAfetadas == 0) {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok("Participante atualizado com sucesso.");
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Erro: E-mail institucional já está em uso por outro participante.");
+                    .body("Erro: E-mail institucional já pertence a outro participante.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao atualizar participante: " + e.getMessage());
         }
     }
-
     @DeleteMapping("/{cpf}")
     public ResponseEntity<?> deletar(@PathVariable String cpf) {
         int linhasAfetadas = repository.deletar(cpf);
