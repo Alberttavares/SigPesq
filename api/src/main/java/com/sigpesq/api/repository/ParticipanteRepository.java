@@ -38,6 +38,32 @@ public class ParticipanteRepository {
         return total != null && total > 0;
     }
 
+    // AUTH (Valida CPF e compara a senha pura com o hash BCrypt do banco)
+    public Participante autenticar(String cpf, String senhaPura) {
+        String sql = "SELECT cpf, nome, email_institucional, tipo, senha FROM participante WHERE cpf = ?";
+
+        List<Participante> lista = jdbc.query(sql, (rs, rowNum) -> {
+            Participante p = new Participante();
+            p.setCpf(rs.getString("cpf"));
+            p.setNome(rs.getString("nome"));
+            p.setEmailInstitucional(rs.getString("email_institucional"));
+            p.setTipo(rs.getString("tipo"));
+            p.setSenha(rs.getString("senha"));
+            return p;
+        }, cpf);
+
+        if (lista.isEmpty()) {
+            return null;
+        }
+
+        Participante participante = lista.get(0);
+        if (!passwordEncoder.matches(senhaPura, participante.getSenha())) {
+            return null;
+        }
+
+        return participante;
+    }
+
     // CREATE
     public void salvar(Participante p) {
         String sql = "INSERT INTO participante (cpf, nome, email_institucional, tipo, senha) VALUES (?, ?, ?, ?, ?)";
