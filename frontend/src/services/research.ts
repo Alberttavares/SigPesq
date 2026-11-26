@@ -185,19 +185,29 @@ export function createResearchService(client: AxiosInstance = apiClient) {
     }
   }
 
-  async function save<K extends CollectionName>(collection: K, data: Partial<RecordOf<K>>, db: Database): Promise<void> {
+  // solicitanteCpf: enviado em X-Solicitante-Cpf nas escritas de participantes, como o back-end espera
+  // para validar alterações que envolvem o tipo Administrador.
+  async function save<K extends CollectionName>(collection: K, data: Partial<RecordOf<K>>, db: Database, solicitanteCpf?: string): Promise<void> {
     const body = payload(collection, data, db);
+    const config = collection === 'participantes' && solicitanteCpf ? { headers: { 'X-Solicitante-Cpf': solicitanteCpf } } : undefined;
     if (data.id === undefined) {
-      await client.post<string>(routes[collection], body);
+      await client.post<string>(routes[collection], body, config);
     } else {
       const original = findRecord(db[collection] as RecordOf<K>[], data.id, 'Registro');
-      await client.put<string>(recordPath(collection, original, db), body);
+      await client.put<string>(recordPath(collection, original, db), body, config);
     }
   }
   async function remove<K extends CollectionName>(collection: K, data: RecordOf<K>, db: Database): Promise<void> {
     await client.delete<void>(recordPath(collection, data, db));
   }
-  return { load, save, remove };
+  // GET /vinculos-projeto/projeto/{codigo}: todos os participantes vinculados ao projeto
+  // (o back-end preenche nome e tipo do participante via JOIN; não há paginação).
+  async function listParticipacoesDoProjeto(codigoProjeto: string, signal?: AbortSignal): Promise<ParticipacaoDTO[]> {
+    const { data } = await client.get<ParticipacaoDTO[]>(`${routes.vinculosParticipacao}/projeto/${segment(codigoProjeto)}`, { signal });
+    if (!Array.isArray(data)) throw new Error('A API retornou uma lista inválida de participantes do projeto.');
+    return data;
+  }
+  return { load, save, remove, listParticipacoesDoProjeto };
 }
 
 export const researchService = createResearchService();

@@ -4,7 +4,8 @@
 // usada para edição, exclusão e relacionamentos. O serviço traduz as chaves da API.
 
 // Valores dos ENUMs conforme o modelo SQL (sem acentuação).
-export type TipoParticipante = 'Docente' | 'Discente' | 'Tecnico';
+// 'Administrador' existe no banco, mas só é criado diretamente nele (nunca pelo cadastro público).
+export type TipoParticipante = 'Docente' | 'Discente' | 'Tecnico' | 'Administrador';
 export type SituacaoProjeto = 'Em andamento' | 'Concluido' | 'Cancelado';
 export type TipoApoio = 'Total' | 'Parcial';
 
@@ -13,6 +14,7 @@ export const TIPO_PARTICIPANTE_LABEL: Record<TipoParticipante, string> = {
   Docente: 'Docente',
   Discente: 'Discente',
   Tecnico: 'Técnico',
+  Administrador: 'Administrador',
 };
 
 export const SITUACAO_PROJETO_LABEL: Record<SituacaoProjeto, string> = {
@@ -91,15 +93,12 @@ export interface AutorProducao {
   dataTermino: string;      // data_termino (pode ficar vazio)
 }
 
-/**
- * Usuário do sistema — entidade apenas para demonstração da interface.
- * Não faz parte do modelo SQL.
- */
-export interface Usuario {
-  id: number;
+/** Usuário autenticado, conforme os dados retornados por POST /auth/login. */
+export interface UsuarioAutenticado {
+  cpf: string;
   nome: string;
   email: string;
-  perfil: 'Administrador' | 'Coordenador' | 'Consulta';
+  tipo: TipoParticipante;
 }
 
 /** Dados da API adaptados aos campos já usados pela interface. */

@@ -10,6 +10,11 @@ export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const body: unknown = error.response?.data;
     if (typeof body === 'string' && body.trim() && !body.trim().startsWith('<')) return body;
+    // Erros de validação (HTTP 400/422) chegam como { campo: mensagem }.
+    if (body && typeof body === 'object' && !Array.isArray(body)) {
+      const messages = Object.values(body).filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+      if (messages.length) return messages.join(' ');
+    }
     if (error.response?.status === 404) return 'Registro não encontrado. Atualize a página e tente novamente.';
     if (error.response?.status === 409) return 'A operação conflita com um registro ou vínculo existente.';
     if (error.code === 'ECONNABORTED') return 'A API demorou para responder. Confira o resultado antes de repetir a operação.';

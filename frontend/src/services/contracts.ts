@@ -6,7 +6,7 @@ export interface ParticipanteDTO {
   cpf: string;
   nome: string;
   emailInstitucional: string;
-  tipo: 'Docente' | 'Discente' | 'Técnico';
+  tipo: 'Docente' | 'Discente' | 'Tecnico' | 'Técnico' | 'Administrador';
 }
 export interface ProjetoDTO {
   codigo: string;

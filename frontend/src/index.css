@@ -9,4 +9,15 @@ body,
 
 body {
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Respeita a preferência do sistema por menos movimento (menu lateral, hovers). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

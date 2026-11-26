@@ -12,7 +12,7 @@ export interface ResearchActions {
   remove: <K extends CollectionName>(collection: K, data: RecordOf<K>) => Promise<boolean>;
 }
 
-export function useResearchData(enabled: boolean, route: string, showMessage: (type: 'success' | 'error', text: string) => void) {
+export function useResearchData(enabled: boolean, route: string, showMessage: (type: 'success' | 'error', text: string) => void, solicitanteCpf?: string) {
   const [db, setDb] = useState<Database>(createEmptyDatabase);
   const snapshot = useRef(db);
   const ready = useRef(false);
@@ -67,7 +67,7 @@ export function useResearchData(enabled: boolean, route: string, showMessage: (t
   }
 
   const actions: ResearchActions = {
-    save: (collection, data) => mutate(() => researchService.save(collection, data, snapshot.current)),
+    save: (collection, data) => mutate(() => researchService.save(collection, data, snapshot.current, solicitanteCpf)),
     remove: (collection, data) => mutate(() => researchService.remove(collection, data, snapshot.current)),
   };
 
