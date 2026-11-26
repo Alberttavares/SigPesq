@@ -3,6 +3,7 @@ package com.sigpesq.api.dto;
 import java.time.LocalDate;
 
 import com.sigpesq.api.model.Projeto;
+import com.sigpesq.api.validation.CpfValido;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
@@ -32,7 +33,7 @@ public record ProjetoRequest(
         String situacao,
 
         @NotBlank(message = "O CPF do coordenador é obrigatório.")
-        @Pattern(regexp = "\\d{11}", message = "O CPF do coordenador deve conter 11 dígitos numéricos.")
+        @CpfValido(message = "Informe um CPF válido para o coordenador.")
         String cpfCoordenador
 ) {
     public ProjetoRequest {
