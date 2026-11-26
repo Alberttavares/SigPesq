@@ -1,12 +1,14 @@
 package com.sigpesq.api.dto;
 
 import com.sigpesq.api.model.VinculoParticipacaoProjeto;
+import com.sigpesq.api.validation.CpfValido;
+
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 
 public record VinculoParticipacaoProjetoRequest(
         @NotBlank(message = "O CPF do participante é obrigatório.")
-        @Pattern(regexp = "\\d{11}", message = "O CPF deve conter 11 dígitos numéricos.")
+        @CpfValido(message = "Informe um CPF válido para o participante.")
         String cpfParticipante,
 
         @NotBlank(message = "O código do projeto é obrigatório.")

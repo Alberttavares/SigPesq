@@ -237,10 +237,12 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
     
     private void AdministradorSeeder() {
-        Participante existente = participanteRepo.buscarPorCpf("00000000000");
+
+        String cpfAdmin = "11144477735";
+        Participante existente = participanteRepo.buscarPorCpf("11144477735");
 
         Participante admin = new Participante();
-        admin.setCpf("00000000000");
+        admin.setCpf(cpfAdmin);
         admin.setNome("Administrador SIGPESQ");
         admin.setEmailInstitucional("admin@ufes.br");
         admin.setTipo("Administrador");
@@ -251,8 +253,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                 participanteRepo.salvar(admin);
                 System.out.println("[Seeder] Administrador padrão criado: admin@ufes.br");
             } else if (!"Administrador".equals(existente.getTipo())) {
-                participanteRepo.atualizar("00000000000", admin);
-                System.out.println("[Seeder] Participante 00000000000 promovido a Administrador.");
+                participanteRepo.atualizar(cpfAdmin, admin);
+                System.out.println("[Seeder] Participante " + cpfAdmin + " promovido a Administrador.");
             }
         } catch (DuplicateKeyException e) {
             System.out.println("[Seeder] Não foi possível criar o admin padrão: e-mail admin@ufes.br já está em uso por outro CPF.");

@@ -1,6 +1,8 @@
 package com.sigpesq.api.dto;
 
 import com.sigpesq.api.model.VinculoParticipanteProducao;
+import com.sigpesq.api.validation.CpfValido;
+
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 
@@ -10,7 +12,7 @@ public record VinculoParticipanteProducaoRequest(
         Integer idProducao,
 
         @NotBlank(message = "O CPF do participante é obrigatório.")
-        @Pattern(regexp = "\\d{11}", message = "O CPF deve conter 11 dígitos numéricos.")
+        @CpfValido(message = "Informe um CPF válido para o participante.")
         String cpfParticipante,
 
         @NotBlank(message = "O tipo de participação é obrigatório.")
