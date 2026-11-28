@@ -22,7 +22,7 @@ public record ParticipanteRequest(
         String emailInstitucional,
 
         @NotBlank(message = "O tipo de participante é obrigatório.")
-        @Pattern(regexp = "Docente|Discente|Tecnico|Administrador", message = "O tipo deve ser 'Docente', 'Discente', 'Tecnico' ou 'Administrador'.")
+        @Pattern(regexp = "^[DPAT]$", message = "O tipo deve ser 'D' (Administrador), 'P' (Docente), 'A' (Discente) ou 'T' (Técnico).")
         String tipo,
 
         @Size(min = 6, max = 100, message = "A senha deve ter entre 6 e 100 caracteres.")
@@ -32,8 +32,14 @@ public record ParticipanteRequest(
         cpf = cpf != null ? cpf.replaceAll("\\D", "") : null;
         nome = nome != null ? nome.trim() : null;
         emailInstitucional = emailInstitucional != null ? emailInstitucional.trim().toLowerCase() : null;
-        if (tipo != null) {
-            tipo = tipo.trim().equalsIgnoreCase("Técnico") ? "Tecnico" : tipo.trim();
+     if (tipo != null) {
+            tipo = switch (tipo.trim().toLowerCase()) {
+                case "administrador", "d" -> "D";
+                case "docente", "p" -> "P";
+                case "discente", "a" -> "A";
+                case "técnico", "tecnico", "t" -> "T";
+                default -> tipo.trim().toUpperCase();
+            };
         }
         senha = (senha != null && senha.isBlank()) ? null : senha;
     }

@@ -1,9 +1,3 @@
--- Estrutura compativel com os models, repositories e controllers atuais da API.
--- Banco existente: sigpesq. Este script nao cria nem recria o banco.
--- Somente tabelas ausentes sao criadas. Tabelas existentes nao sao alteradas.
--- Nao ha dados iniciais, comandos de remocao, cascatas ou triggers.
--- Decisoes de tipos, nulabilidade e limites: consulte database/README.md.
-
 USE `sigpesq`;
 SET NAMES utf8mb4;
 
@@ -12,7 +6,7 @@ CREATE TABLE IF NOT EXISTS `participante` (
     `nome` VARCHAR(255) NOT NULL,
     `senha` VARCHAR(255) NOT NULL,
     `email_institucional` VARCHAR(255) NOT NULL,
-    `tipo` ENUM('Docente', 'Discente', 'Tecnico', 'Administrador') NOT NULL,
+    `tipo` CHAR(1) NOT NULL COMMENT 'Docente: P, Discente: A, Tecnico: T, Administrador: D',
     PRIMARY KEY (`cpf`),
     CONSTRAINT `uq_participante_email` UNIQUE (`email_institucional`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -23,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `projeto` (
     `descricao` TEXT NULL,
     `data_inicio` DATE NULL,
     `data_termino` DATE NULL,
-    `situacao` ENUM('Em andamento', 'Concluido', 'Cancelado') NOT NULL,
+    `situacao` CHAR(1) NOT NULL COMMENT 'Em andamento: E, Concluido: C, Cancelado: K',
     `cpf_coordenador` CHAR(11) NOT NULL,
     PRIMARY KEY (`codigo`),
     KEY `idx_projeto_coordenador` (`cpf_coordenador`),
@@ -33,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `projeto` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `financiamento` (
-    `id_financiamento` INT NOT NULL AUTO_INCREMENT,
+    `id_financiamento` INT NOT NULL,
     `agencia_financiadora` VARCHAR(255) NOT NULL,
     `tipo_fomento` VARCHAR(255) NOT NULL,
     `valor_total` DECIMAL(15, 2) NOT NULL,
@@ -48,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `financiamento` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `producao_cientifica` (
-    `id_producao` INT NOT NULL AUTO_INCREMENT,
+    `id_producao` INT NOT NULL,
     `codigo_projeto` VARCHAR(255) NOT NULL,
     `titulo` VARCHAR(255) NOT NULL,
     `tipo` VARCHAR(255) NOT NULL,
@@ -78,10 +72,10 @@ CREATE TABLE IF NOT EXISTS `vinculo_participacao_projeto` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `vinculo_financiamento_projeto` (
-    `id_vinculo_financiamento` INT NOT NULL AUTO_INCREMENT,
+    `id_vinculo_financiamento` INT NOT NULL,
     `id_financiamento` INT NOT NULL,
     `codigo_projeto` VARCHAR(255) NOT NULL,
-    `tipo_apoio` ENUM('Total', 'Parcial') NOT NULL,
+    `tipo_apoio` CHAR(1) NOT NULL COMMENT 'Total: T, Parcial: P',
     `valor_apoio` DECIMAL(15, 2) NULL,
     PRIMARY KEY (`id_vinculo_financiamento`),
     KEY `idx_vinculo_financiamento` (`id_financiamento`),

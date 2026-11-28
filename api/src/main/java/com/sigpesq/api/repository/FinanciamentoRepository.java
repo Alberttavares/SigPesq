@@ -4,6 +4,7 @@ import com.sigpesq.api.model.Financiamento;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,16 +28,27 @@ public class FinanciamentoRepository {
         return f;
     };
 
-    // CREATE (RF04 / UC04)
-    public void salvar(Financiamento f) {
-        String sql = "INSERT INTO financiamento (agencia_financiadora, tipo_fomento, valor_total, data_inicio_vigencia, data_fim_vigencia) " +
-                     "VALUES (?, ?, ?, ?, ?)";
+     @Transactional
+    public Financiamento salvar(Financiamento f) {
+        Integer proximoId = jdbc.queryForObject(
+                "SELECT COALESCE(MAX(id_financiamento), 0) + 1 FROM financiamento",
+                Integer.class
+        );
+
+        String sql = "INSERT INTO financiamento (id_financiamento, agencia_financiadora, tipo_fomento, valor_total, data_inicio_vigencia, data_fim_vigencia) " +
+                     "VALUES (?, ?, ?, ?, ?, ?)";
+
         jdbc.update(sql,
+                proximoId,
                 f.getAgenciaFinanciadora(),
                 f.getTipoFomento(),
                 f.getValorTotal(),
                 f.getDataInicioVigencia(),
-                f.getDataFimVigencia());
+                f.getDataFimVigencia()
+        );
+
+        f.setIdFinanciamento(proximoId);
+        return f;
     }
 
     // READ - Todos (RF04)

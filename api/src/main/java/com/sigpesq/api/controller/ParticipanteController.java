@@ -40,7 +40,7 @@ public class ParticipanteController {
     }
 
     private boolean podeDefinirAdministrador(String tipoDestino, String cpfSolicitante) {
-        if (!"Administrador".equals(tipoDestino)) {
+        if (!"D".equals(tipoDestino)) {
             return true;
         }
         if (cpfSolicitante == null || cpfSolicitante.isBlank()) {

@@ -33,7 +33,7 @@ public class ParticipanteRepository {
         if (cpf == null || cpf.isBlank()) {
             return false;
         }
-        String sql = "SELECT COUNT(*) FROM participante WHERE cpf = ? AND tipo = 'Administrador'";
+        String sql = "SELECT COUNT(*) FROM participante WHERE cpf = ? AND tipo = 'D'";
         Integer total = jdbc.queryForObject(sql, Integer.class, cpf);
         return total != null && total > 0;
     }

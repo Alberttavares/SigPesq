@@ -16,6 +16,11 @@ public class ProjetoRepository {
         this.jdbc = jdbc;
     }
 
+
+    private String limparCpf(String cpf) {
+        return cpf == null ? null : cpf.replaceAll("\\D", "");
+    }
+
     private final RowMapper<Projeto> rowMapper = (rs, rowNum) -> {
         Projeto p = new Projeto();
         p.setCodigo(rs.getString("codigo"));
@@ -37,14 +42,16 @@ public class ProjetoRepository {
         if (resultados.isEmpty()) {
             throw new IllegalArgumentException("Nenhum participante encontrado com o CPF de coordenador informado.");
         }
-        if (!"Docente".equalsIgnoreCase(resultados.get(0))) {
-            throw new IllegalArgumentException("Regra RN02: Apenas participantes do tipo 'Docente' podem coordenar projetos.");
+        String tipo = resultados.get(0);
+        if (!"P".equals(tipo)) {
+            throw new IllegalArgumentException("Regra RN02: Apenas participantes do tipo 'Docente' (P) podem coordenar projetos.");
         }
     }
 
-    // CREATE (RF01 / UC01)
+   // CREATE (RF01 / UC01)
     public void salvar(Projeto p) {
-        validarCoordenadorDocente(p.getCpfCoordenador());
+        String cpfLimpo = limparCpf(p.getCpfCoordenador());
+        validarCoordenadorDocente(cpfLimpo);
 
         String sql = "INSERT INTO projeto (codigo, titulo, descricao, data_inicio, data_termino, situacao, cpf_coordenador) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -55,7 +62,7 @@ public class ProjetoRepository {
                 p.getDataInicio(),
                 p.getDataTermino(),
                 p.getSituacao(),
-                p.getCpfCoordenador());
+                cpfLimpo);
     }
 
     // READ - Todos (RF01)
@@ -77,19 +84,20 @@ public class ProjetoRepository {
         return lista.isEmpty() ? null : lista.get(0);
     }
 
-    // READ - Projetos coordenados por um docente específico (RF09)
+ // READ - Projetos coordenados por um docente específico (RF09)
     public List<Projeto> buscarPorCoordenador(String cpfCoordenador) {
         String sql = "SELECT pr.*, pa.nome AS nome_coordenador " +
                      "FROM projeto pr " +
                      "INNER JOIN participante pa ON pr.cpf_coordenador = pa.cpf " +
                      "WHERE pr.cpf_coordenador = ? " +
                      "ORDER BY pr.data_inicio DESC";
-        return jdbc.query(sql, rowMapper, cpfCoordenador);
+        return jdbc.query(sql, rowMapper, limparCpf(cpfCoordenador));
     }
 
     // UPDATE (RF01 / UC01)
     public int atualizar(String codigo, Projeto p) {
-        validarCoordenadorDocente(p.getCpfCoordenador());
+        String cpfLimpo = limparCpf(p.getCpfCoordenador());
+        validarCoordenadorDocente(cpfLimpo);
 
         String sql = "UPDATE projeto SET titulo = ?, descricao = ?, data_inicio = ?, data_termino = ?, " +
                      "situacao = ?, cpf_coordenador = ? WHERE codigo = ?";
@@ -99,7 +107,7 @@ public class ProjetoRepository {
                 p.getDataInicio(),
                 p.getDataTermino(),
                 p.getSituacao(),
-                p.getCpfCoordenador(),
+                cpfLimpo,
                 codigo);
     }
 

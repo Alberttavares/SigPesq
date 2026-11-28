@@ -20,7 +20,7 @@ import java.util.List;
 public class ProjetoController {
 
     private final ProjetoRepository repository;
-    private static final List<String> SITUACOES_VALIDAS = List.of("Em andamento", "Concluido", "Cancelado");
+    private static final List<String> SITUACOES_VALIDAS = List.of("E", "C", "K");
 
     public ProjetoController(ProjetoRepository repository) {
         this.repository = repository;
