@@ -38,8 +38,8 @@ public class VinculoParticipacaoProjetoRepository {
             if (tipos.isEmpty()) {
                 throw new IllegalArgumentException("Participante não encontrado.");
             }
-            if (!"Docente".equalsIgnoreCase(tipos.get(0))) {
-                throw new IllegalArgumentException("Regra RN02: Apenas participantes do tipo 'Docente' podem exercer a função de Coordenador.");
+            if (!"P".equalsIgnoreCase(tipos.get(0))) {
+                throw new IllegalArgumentException("Regra RN02: Apenas participantes do tipo 'Docente' (P) podem atuar como coordenadores no projeto.");
             }
 
             String sqlExisteCoord = "SELECT COUNT(*) FROM vinculo_participacao_projeto " +

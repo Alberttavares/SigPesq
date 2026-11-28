@@ -4,6 +4,7 @@ import com.sigpesq.api.model.VinculoFinanciamentoProjeto;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -61,14 +62,26 @@ public class VinculoFinanciamentoProjetoRepository {
             throw new IllegalArgumentException("O valor de apoio excede o saldo disponível do financiamento (Total: R$ " + valorTotal + ").");
         }
     }
+@Transactional
+public void salvar(VinculoFinanciamentoProjeto v) {
+    Integer proximoId = jdbc.queryForObject(
+            "SELECT COALESCE(MAX(id_vinculo_financiamento), 0) + 1 FROM vinculo_financiamento_projeto",
+            Integer.class
+    );
 
-    public void salvar(VinculoFinanciamentoProjeto v) {
-        validarSaldoDisponivel(v.getIdFinanciamento(), null, v.getValorApoio());
+    String sql = "INSERT INTO vinculo_financiamento_projeto (id_vinculo_financiamento, id_financiamento, codigo_projeto, tipo_apoio, valor_apoio) " +
+                 "VALUES (?, ?, ?, ?, ?)";
 
-        String sql = "INSERT INTO vinculo_financiamento_projeto (id_financiamento, codigo_projeto, tipo_apoio, valor_apoio) " +
-                     "VALUES (?, ?, ?, ?)";
-        jdbc.update(sql, v.getIdFinanciamento(), v.getCodigoProjeto(), v.getTipoApoio(), v.getValorApoio());
-    }
+    jdbc.update(sql,
+            proximoId,
+            v.getIdFinanciamento(),
+            v.getCodigoProjeto(),
+            v.getTipoApoio(),
+            v.getValorApoio()
+    );
+
+    v.setIdVinculoFinanciamento(proximoId);
+}
 
     public List<VinculoFinanciamentoProjeto> listarTodos() {
         String sql = "SELECT v.*, f.agencia_financiadora, f.tipo_fomento, p.titulo AS titulo_projeto " +

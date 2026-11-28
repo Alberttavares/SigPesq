@@ -28,8 +28,7 @@ public record ProjetoRequest(
         LocalDate dataTermino,
 
         @NotBlank(message = "A situação é obrigatória.")
-        @Pattern(regexp = "Em andamento|Concluido|Cancelado",
-                 message = "A situação deve ser 'Em andamento', 'Concluido' ou 'Cancelado'.")
+        @Pattern(regexp = "^[ECK]$", message = "A situação deve ser 'E' (Em andamento), 'C' (Concluído) ou 'K' (Cancelado).")
         String situacao,
 
         @NotBlank(message = "O CPF do coordenador é obrigatório.")

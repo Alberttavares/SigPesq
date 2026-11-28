@@ -14,7 +14,7 @@ public record VinculoFinanciamentoProjetoRequest(
         String codigoProjeto,
 
         @NotBlank(message = "O tipo de apoio é obrigatório.")
-        @Pattern(regexp = "Total|Parcial", message = "O tipo de apoio deve ser 'Total' ou 'Parcial'.")
+        @Pattern(regexp = "^[TP]$", message = "O tipo de apoio deve ser 'T' (Total) ou 'P' (Parcial).")
         String tipoApoio,
 
         @Positive(message = "O valor de apoio deve ser maior que zero.")

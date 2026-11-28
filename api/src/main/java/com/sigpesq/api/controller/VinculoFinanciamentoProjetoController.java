@@ -19,7 +19,7 @@ import java.util.List;
 public class VinculoFinanciamentoProjetoController {
 
     private final VinculoFinanciamentoProjetoRepository repository;
-    private static final List<String> TIPOS_APOIO_VALIDOS = List.of("Total", "Parcial");
+    private static final List<String> TIPOS_APOIO_VALIDOS = List.of("T", "P");
 
     public VinculoFinanciamentoProjetoController(VinculoFinanciamentoProjetoRepository repository) {
         this.repository = repository;

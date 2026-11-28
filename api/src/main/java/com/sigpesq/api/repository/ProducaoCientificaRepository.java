@@ -4,6 +4,7 @@ import com.sigpesq.api.model.ProducaoCientifica;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,17 +29,27 @@ public class ProducaoCientificaRepository {
         return pc;
     };
 
-    // CREATE (RF06 / UC03)
-    public void salvar(ProducaoCientifica pc) {
-        String sql = "INSERT INTO producao_cientifica (codigo_projeto, titulo, tipo, ano_publicacao, meio_divulgacao) " +
-                     "VALUES (?, ?, ?, ?, ?)";
-        jdbc.update(sql,
-                pc.getCodigoProjeto(),
-                pc.getTitulo(),
-                pc.getTipo(),
-                pc.getAnoPublicacao(),
-                pc.getMeioDivulgacao());
-    }
+  @Transactional
+    public void salvar(ProducaoCientifica p) {
+    Integer proximoId = jdbc.queryForObject(
+            "SELECT COALESCE(MAX(id_producao), 0) + 1 FROM producao_cientifica",
+            Integer.class
+    );
+
+    String sql = "INSERT INTO producao_cientifica (id_producao, codigo_projeto, titulo, tipo, ano_publicacao, meio_divulgacao) " +
+                 "VALUES (?, ?, ?, ?, ?, ?)";
+
+    jdbc.update(sql,
+            proximoId,
+            p.getCodigoProjeto(),
+            p.getTitulo(),
+            p.getTipo(),
+            p.getAnoPublicacao(),
+            p.getMeioDivulgacao()
+    );
+
+    p.setIdProducao(proximoId);
+}
 
     // READ - Todas (RF06)
     public List<ProducaoCientifica> listarTodas() {
